@@ -23,8 +23,8 @@ export default function NotFound() {
         </h2>
         <p className="text-lg text-ashenvale/90 max-w-md">
           Looks like this loan application took a detour to the Bermuda Triangle
-          of the internet. Don't worry, it's probably just taking a coffee
-          break!
+          of the internet. Don&apos;t worry, it&apos;s probably just taking a
+          coffee break!
         </p>
       </div>
 

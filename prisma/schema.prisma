@@ -11,10 +11,131 @@ datasource db {
   directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
 }
 
-model users {
-  id        Int      @id @default(autoincrement())
+enum LoanStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  ACTIVE
+  COMPLETED
+  DEFAULTED
+  CANCELLED
+}
+
+enum LoanType {
+  PERSONAL
+  BUSINESS
+  MORTGAGE
+  AUTO
+  STUDENT
+  OTHER
+}
+
+enum PaymentFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+model User {
+  id        String   @id @default(cuid())
   name      String
   email     String   @unique
-  image     String
+  phone     String?
+  address   String?
+  
+  // Timestamps
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  loans     Loan[]
+  
+  @@map("users")
+}
+
+model Loan {
+  id                String           @id @default(cuid())
+  loanNumber        String           @unique
+  borrowerId        String
+  
+  // Loan Details
+  loanType          LoanType
+  amount            Decimal          @db.Decimal(12, 2)
+  interestRate      Decimal          @db.Decimal(5, 4) // e.g., 5.25% stored as 0.0525
+  termMonths        Int
+  paymentFrequency  PaymentFrequency @default(MONTHLY)
+  
+  // Calculated Fields
+  monthlyPayment    Decimal?         @db.Decimal(12, 2)
+  totalInterest     Decimal?         @db.Decimal(12, 2)
+  totalAmount       Decimal?         @db.Decimal(12, 2)
+  
+  // Status and Dates
+  status            LoanStatus       @default(PENDING)
+  applicationDate   DateTime         @default(now())
+  approvalDate      DateTime?
+  disbursementDate  DateTime?
+  maturityDate      DateTime?
+  
+  // Additional Information
+  purpose           String?
+  notes             String?
+  collateral        String?
+  coSignerName      String?
+  coSignerEmail     String?
+  coSignerPhone     String?
+  
+  // AI Enhancement Fields
+  riskScore         Int?             // 1-100 risk assessment
+  aiRecommendation  String?          // AI-generated recommendation
+  aiNotes           String?          // AI-generated notes
+  
+  // Timestamps
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  
+  // Relations
+  borrower          User             @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  payments          Payment[]
+  documents         Document[]
+  
+  @@map("loans")
+}
+
+model Payment {
+  id              String    @id @default(cuid())
+  loanId          String
+  amount          Decimal   @db.Decimal(12, 2)
+  principalAmount Decimal   @db.Decimal(12, 2)
+  interestAmount  Decimal   @db.Decimal(12, 2)
+  paymentDate     DateTime  @default(now())
+  dueDate         DateTime
+  status          String    @default("PENDING") // PENDING, PAID, LATE, MISSED
+  paymentMethod   String?   // CASH, CHECK, BANK_TRANSFER, CARD
+  reference       String?   // Payment reference number
+  notes           String?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  loan            Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  
+  @@map("payments")
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  loanId      String
+  name        String
+  type        String   // CONTRACT, ID, INCOME_PROOF, BANK_STATEMENT, etc.
+  url         String
+  uploadedAt  DateTime @default(now())
+  
+  // Relations
+  loan        Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  
+  @@map("documents")
 }

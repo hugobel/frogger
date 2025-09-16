@@ -21,7 +21,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.variable}>{children}</body>
+      <body className={`${inter.variable} bg-background text-primary`}>
+        <main className="relative flex min-h-screen flex-col items-center pt-24">
+          <div className="flex flex-col items-center w-full max-w-7xl ">
+            {children}
+          </div>
+        </main>
+      </body>
     </html>
   )
 }
